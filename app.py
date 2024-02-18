@@ -1,4 +1,4 @@
-from quart import Quart, request, jsonify, websocket, render_template
+from quart import Quart, request, jsonify, websocket, render_template, send_from_directory
 import os
 import aiosqlite
 import datetime
@@ -60,6 +60,11 @@ async def send_files_to_all_websockets():
         files = await cursor.fetchall()
         for ws in active_websockets:
             await ws.send_json({'files': files})
+
+
+@app.route('/download/<filename>')
+async def download_file(filename):
+    return await send_from_directory(UPLOAD_FOLDER, filename, as_attachment=True)
 
 
 @app.websocket('/ws')

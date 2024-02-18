@@ -3,6 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <title>File Upload and Real-time Update</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        h2, h3 {
+            color: #333;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input[type="file"] {
+            margin-bottom: 10px;
+        }
+        button {
+            background-color: #4CAF50; /* Green */
+            color: white;
+            padding: 10px 20px;
+            margin: 4px 0;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            text-align: left;
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+        tr:hover {background-color: #f5f5f5;}
+    </style>
 </head>
 <body>
     <h2>Upload File</h2>
@@ -18,6 +57,7 @@
                 <th>File Name</th>
                 <th>Size (Bytes)</th>
                 <th>Upload Time</th>
+                <th>Download</th>
             </tr>
         </thead>
         <tbody>
@@ -36,9 +76,17 @@
             });
             const result = await response.json();
             console.log(result.message);
+
+            // Reset the file input after successful upload
+            if (response.ok) {
+                document.getElementById('fileInput').value = '';
+            }
+
         };
 
-        const ws = new WebSocket(`ws://${window.location.host}/ws`);
+        // Adjust the WebSocket protocol based on the page's protocol
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
+        const ws = new WebSocket(`${wsProtocol}${window.location.host}/ws`);
         ws.onmessage = function(event) {
             const data = JSON.parse(event.data);
             if (data.files) {
@@ -51,11 +99,19 @@
             tbody.innerHTML = ''; // Clear current list
             files.forEach(file => {
                 const row = tbody.insertRow();
-                row.insertCell(0).innerText = file[0];
-                row.insertCell(1).innerText = file[1];
-                row.insertCell(2).innerText = file[2];
+                row.insertCell(0).innerText = file[0]; // File name
+                row.insertCell(1).innerText = file[1]; // Size
+                row.insertCell(2).innerText = file[2]; // Upload time
+
+                // Create a download link
+                const downloadLink = document.createElement('a');
+                downloadLink.href = `/download/${file[0]}`;
+                downloadLink.innerText = 'Download';
+                const downloadCell = row.insertCell(3); // New cell for download link
+                downloadCell.appendChild(downloadLink);
             });
-        }
+}
+
     </script>
 </body>
 </html>
