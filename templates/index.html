@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>File Upload and Real-time Update</title>
+</head>
+<body>
+    <h2>Upload File</h2>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" id="fileInput" name="file">
+        <button type="submit">Upload</button>
+    </form>
+
+    <h3>Uploaded Files</h3>
+    <table id="filesList">
+        <thead>
+            <tr>
+                <th>File Name</th>
+                <th>Size (Bytes)</th>
+                <th>Upload Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Files will be listed here -->
+        </tbody>
+    </table>
+
+    <script>
+        document.getElementById('uploadForm').onsubmit = async function(event) {
+            event.preventDefault();
+            const formData = new FormData();
+            formData.append('file', document.getElementById('fileInput').files[0]);
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData,
+            });
+            const result = await response.json();
+            console.log(result.message);
+        };
+
+        const ws = new WebSocket(`ws://${window.location.host}/ws`);
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            if (data.files) {
+                updateFilesList(data.files);
+            }
+        };
+
+        function updateFilesList(files) {
+            const tbody = document.getElementById('filesList').getElementsByTagName('tbody')[0];
+            tbody.innerHTML = ''; // Clear current list
+            files.forEach(file => {
+                const row = tbody.insertRow();
+                row.insertCell(0).innerText = file[0];
+                row.insertCell(1).innerText = file[1];
+                row.insertCell(2).innerText = file[2];
+            });
+        }
+    </script>
+</body>
+</html>
